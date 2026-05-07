@@ -16,6 +16,8 @@ Cada carpeta es un proyecto independiente en **C++** que demuestra un concepto f
 | 4 | `4. Delfin` | Geometría compleja (meshes), uniforms, animación y blending |
 | 4 | `4. Texturas` | Carga de imágenes con `stb_image`, mapeo UV y texturas 2D |
 | 5 | `5. Texturas y Movimiento` | Matrices de transformación con GLM, delta time e input de teclado |
+| 7 | `7. Mundo 3D` | Cubo 3D texturizado con matrices MVP, Z-Buffer y proyección perspectiva |
+| 8 | `8. Mundo 3D interactivo` | Cámara orbital con mouse, zoom con teclado y delta time |
 
 ---
 
@@ -94,6 +96,33 @@ Combina texturas con **transformaciones en tiempo real**. El usuario puede mover
 
 ---
 
+### 7. Mundo 3D
+Da el salto de 2D a **3D real** dibujando un **cubo texturizado** que rota automáticamente. Introduce las tres matrices fundamentales del 3D: **Modelo** (posiciona y rota el objeto), **Vista** (simula la cámara) y **Proyección** (aplica perspectiva). Activa el **Z-Buffer** (`GL_DEPTH_TEST`) para que las caras del cubo se oculten correctamente según la profundidad.
+
+**Conceptos clave:**
+- Geometría 3D: cubo de 36 vértices (6 caras × 2 triángulos × 3 vértices)
+- Matrices MVP (Model-View-Projection) con GLM
+- `glm::rotate`, `glm::translate`, `glm::perspective`
+- Z-Buffer con `glEnable(GL_DEPTH_TEST)` y `GL_DEPTH_BUFFER_BIT`
+- Rotación automática basada en `glfwGetTime()`
+- Vertex shader con multiplicación `projection * view * model * vec4(aPos, 1.0)`
+
+---
+
+### 8. Mundo 3D Interactivo
+Extiende el cubo 3D agregando **interactividad completa**. El usuario puede orbitar la cámara alrededor del cubo con el **mouse**, hacer **zoom** con las teclas `W`/`S`, y rotar el modelo con `A`/`D`. Implementa una **cámara orbital** usando coordenadas esféricas y la función `glm::lookAt`. Utiliza **delta time** para que el movimiento sea fluido e independiente del framerate.
+
+**Conceptos clave:**
+- Cámara orbital con coordenadas esféricas (yaw, pitch, radius)
+- `glm::lookAt` para construir la matriz de vista
+- Callback de mouse con `glfwSetCursorPosCallback`
+- Captura del cursor con `GLFW_CURSOR_DISABLED`
+- Delta time (`deltaTime`) para movimiento consistente
+- Control de zoom y rotación del modelo por teclado
+- Límites de pitch (−89° a 89°) para evitar gimbal lock
+
+---
+
 ## 🛠️ Tecnologías y Dependencias
 
 | Tecnología | Uso |
@@ -103,8 +132,8 @@ Combina texturas con **transformaciones en tiempo real**. El usuario puede mover
 | **GLFW** | Creación de ventana y manejo de input |
 | **GLAD** | Carga de funciones de OpenGL |
 | **GLSL** | Lenguaje de shaders |
-| **stb_image** | Carga de imágenes (ejemplos 4 y 5) |
-| **GLM** | Matemáticas para gráficos (ejemplo 5) |
+| **stb_image** | Carga de imágenes (ejemplos 4, 5, 7 y 8) |
+| **GLM** | Matemáticas para gráficos (ejemplos 5, 7 y 8) |
 
 ---
 
@@ -155,6 +184,8 @@ g++ src/main.cpp src/glad.c -o programa.exe -I include -L lib -lglfw3 -lgdi32 -l
 Triángulo ──► EBO Cuadrado ──► EBO Casa ──► Delfín (escena completa)
                                                │
                                           Texturas ──► Texturas + Movimiento
+                                                              │
+                                                        Mundo 3D ──► Mundo 3D Interactivo
 ```
 
 Los ejemplos siguen un orden pedagógico donde cada uno añade un concepto nuevo sobre lo aprendido anteriormente, construyendo gradualmente una comprensión completa del pipeline de OpenGL moderno.
