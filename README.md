@@ -18,6 +18,11 @@ Cada carpeta es un proyecto independiente en **C++** que demuestra un concepto f
 | 5 | `5. Texturas y Movimiento` | Matrices de transformación con GLM, delta time e input de teclado |
 | 7 | `7. Mundo 3D` | Cubo 3D texturizado con matrices MVP, Z-Buffer y proyección perspectiva |
 | 8 | `8. Mundo 3D interactivo` | Cámara orbital con mouse, zoom con teclado y delta time |
+| 9 | `9. Multiples Objetos` | Renderizado de múltiples cubos con un solo VAO/VBO y bucle de instancias |
+| 10 | `10. Iluminacion` | Modelo de iluminación Phong (ambiental + difusa + especular) con normales |
+| 11 | `11. Materiales` | Struct `Material` en GLSL con propiedades por objeto (esmeralda, oro, rubí…) |
+| 11.1 | `11.1. Materiales - Esferas` | Generación procedural de esferas con materiales contrastantes |
+| 12 | `12. Mapas de Iluminación, Texturas` | Mapas difuso y especular con `sampler2D`, multi-textura y scroll zoom |
 
 ---
 
@@ -123,6 +128,74 @@ Extiende el cubo 3D agregando **interactividad completa**. El usuario puede orbi
 
 ---
 
+### 9. Múltiples Objetos
+Demuestra cómo renderizar **10 cubos texturizados** en distintas posiciones del espacio 3D usando un **único VAO/VBO** compartido. En cada frame se recorre un arreglo de posiciones y se aplica una **matriz modelo diferente** por cubo (traslación + rotación individual). Las matrices de vista y proyección se envían una sola vez por frame, mientras que la matriz modelo se actualiza en cada iteración del bucle.
+
+**Conceptos clave:**
+- Instanciación manual con bucle `for` y arreglo de posiciones `cubePositions[]`
+- Una sola llamada a `glBindVertexArray` por frame, múltiples `glDrawArrays`
+- Rotación individual por objeto: ángulo base `20° × i` + rotación global
+- Reutilización de geometría y textura entre instancias
+- Separación de uniforms por frecuencia (view/projection una vez, model por objeto)
+
+---
+
+### 10. Iluminación
+Introduce el **modelo de iluminación Phong** completo sobre los 10 cubos. Cada vértice ahora incluye un **vector normal** además de su posición. El fragment shader calcula tres componentes de luz: **ambiental** (luz base constante), **difusa** (depende del ángulo entre la normal y la dirección de la luz) y **especular** (reflejo brillante que depende de la posición del observador). La fuente de luz **orbita automáticamente** alrededor de la escena.
+
+**Conceptos clave:**
+- Vectores normales por vértice (stride de 6 floats: posición + normal)
+- Componente ambiental: `ambientStrength * lightColor`
+- Componente difusa: `max(dot(normal, lightDir), 0.0)` (Ley de Lambert)
+- Componente especular: `pow(max(dot(viewDir, reflectDir), 0.0), 32)` (Phong)
+- Matriz normal: `mat3(transpose(inverse(model)))` para transformar normales correctamente
+- `FragPos` en espacio mundo para cálculos de iluminación en el fragment shader
+- Uniforms: `lightPos`, `viewPos`, `lightColor`, `objectColor`
+- Luz en movimiento con funciones seno/coseno sobre `glfwGetTime()`
+
+---
+
+### 11. Materiales
+Reemplaza el color fijo del objeto (`objectColor`) por un **struct `Material`** en GLSL que define propiedades de superficie individuales: `ambient`, `diffuse`, `specular` y `shininess`. Cada uno de los 10 cubos recibe un **material diferente** (esmeralda, oro, plata, rubí, turquesa, perla, obsidiana, cromo, latón y plástico rojo), lo que produce respuestas de iluminación visualmente distintas bajo la misma fuente de luz.
+
+**Conceptos clave:**
+- Struct `Material` en GLSL con propiedades `ambient`, `diffuse`, `specular`, `shininess`
+- Struct `MaterialData` en C++ como espejo del struct GLSL
+- Arreglo de 10 materiales predefinidos con valores realistas (tabla de materiales OpenGL)
+- Envío de campos struct como uniforms: `material.ambient`, `material.diffuse`, etc.
+- `shininess * 128.0` para mapear el rango del exponente especular
+- Cada componente de luz ahora se multiplica por la propiedad correspondiente del material
+
+---
+
+### 11.1. Materiales — Esferas
+Variación del ejemplo anterior que reemplaza los cubos por **esferas generadas proceduralmente**. La función `crearEsfera()` genera una malla de triángulos a partir de coordenadas esféricas (anillos × sectores), con normales calculadas automáticamente. Las 10 esferas se disponen en un **círculo** y presentan 5 materiales contrastantes (goma mate, cromo/espejo, plástico azul, oro metálico y arcilla roja), cada uno duplicado para comparación.
+
+**Conceptos clave:**
+- Generación procedural de esferas con `rings` y `sectors` (60×60 = alta resolución)
+- Coordenadas esféricas → cartesianas para posiciones y normales
+- Indexado de triángulos a partir de cuadriláteros (2 triángulos por quad)
+- Uso de `std::vector<float>` para geometría dinámica
+- Disposición circular de objetos: `cos(36° × i) × radio`, `sin(36° × i) × radio`
+- Animación de flotación con `sin(time + i)` por esfera
+- `glm::scale` para escalar las esferas
+
+---
+
+### 12. Mapas de Iluminación (Texturas)
+Reemplaza los colores sólidos del material por **mapas de textura**: un **mapa difuso** (`difuso.png`) que define el color base de la superficie, y un **mapa especular** (`especular.png`) en blanco y negro que controla **dónde brilla** el objeto. El vertex shader ahora pasa coordenadas UV al fragment shader, que las usa para muestrear ambas texturas con `sampler2D`. También añade **zoom con la rueda del ratón** mediante `glfwSetScrollCallback`.
+
+**Conceptos clave:**
+- Struct `Material` con `sampler2D diffuse` y `sampler2D specular` en lugar de `vec3`
+- Multi-textura: `GL_TEXTURE0` para el mapa difuso, `GL_TEXTURE1` para el especular
+- `glActiveTexture` + `glBindTexture` para activar unidades de textura
+- Función reutilizable `cargarTextura()` con detección automática de canales (RGB/RGBA)
+- Vértices con stride de 8 floats: posición (3) + normal (3) + UV (2)
+- Zoom con rueda del ratón: `glfwSetScrollCallback` con límites de cercanía/lejanía
+- El mapa especular en B/N actúa como máscara: zonas negras no producen brillo
+
+---
+
 ## 🛠️ Tecnologías y Dependencias
 
 | Tecnología | Uso |
@@ -132,8 +205,8 @@ Extiende el cubo 3D agregando **interactividad completa**. El usuario puede orbi
 | **GLFW** | Creación de ventana y manejo de input |
 | **GLAD** | Carga de funciones de OpenGL |
 | **GLSL** | Lenguaje de shaders |
-| **stb_image** | Carga de imágenes (ejemplos 4, 5, 7 y 8) |
-| **GLM** | Matemáticas para gráficos (ejemplos 5, 7 y 8) |
+| **stb_image** | Carga de imágenes (ejemplos 4, 5, 7, 8, 9 y 12) |
+| **GLM** | Matemáticas para gráficos (ejemplos 5, 7–12) |
 
 ---
 
@@ -186,6 +259,14 @@ Triángulo ──► EBO Cuadrado ──► EBO Casa ──► Delfín (escena c
                                           Texturas ──► Texturas + Movimiento
                                                               │
                                                         Mundo 3D ──► Mundo 3D Interactivo
+                                                                            │
+                                                                   Múltiples Objetos
+                                                                            │
+                                                                      Iluminación
+                                                                            │
+                                                              Materiales ──► Materiales (Esferas)
+                                                                            │
+                                                              Mapas de Iluminación
 ```
 
 Los ejemplos siguen un orden pedagógico donde cada uno añade un concepto nuevo sobre lo aprendido anteriormente, construyendo gradualmente una comprensión completa del pipeline de OpenGL moderno.
