@@ -23,6 +23,8 @@ Cada carpeta es un proyecto independiente en **C++** que demuestra un concepto f
 | 11 | `11. Materiales` | Struct `Material` en GLSL con propiedades por objeto (esmeralda, oro, rubí…) |
 | 11.1 | `11.1. Materiales - Esferas` | Generación procedural de esferas con materiales contrastantes |
 | 12 | `12. Mapas de Iluminación, Texturas` | Mapas difuso y especular con `sampler2D`, multi-textura y scroll zoom |
+| 14 | `14. Proyecto Final` | Rubik Pro: Arquitectura MVC completa, Path Tracing Monte Carlo, cinemática inversa y Toon shading |
+| - | `Sistema Solar Jhon` | Simulación 3D interactiva del Sistema Solar, transformaciones jerárquicas (Tierra-Luna), anillos de Saturno y estrellas procedurales |
 
 ---
 
@@ -196,6 +198,43 @@ Reemplaza los colores sólidos del material por **mapas de textura**: un **mapa 
 
 ---
 
+### Sistema Solar (3D Interactivo)
+Simulación interactiva en 3D de nuestro Sistema Solar (Sol, Mercurio, Venus, Tierra, Luna, Marte, Júpiter, Saturno, Urano y Neptuno). Se aplican transformaciones jerárquicas para que la Luna orbite alrededor de la Tierra mientras esta orbita alrededor del Sol. Además, incluye un campo de 4000 estrellas generado en una esfera gigante y la generación procedural del anillo de Saturno con bandas de polvo y huecos (como la división de Cassini).
+
+**Conceptos clave:**
+- **Transformaciones Jerárquicas**: Renderizado de satélites (Luna) utilizando matrices relativas a sus planetas padres.
+- **Textura Procedural**: Generación dinámica en CPU de la textura de los anillos de Saturno con ruido y degradados basados en `smoothstepf`.
+- **Campo de Estrellas**: Renderizado masivo de puntos (`GL_PROGRAM_POINT_SIZE`) posicionados aleatoriamente en coordenadas esféricas mediante un shader específico.
+- **Iluminación Solar**: El Sol actúa como la fuente de luz puntual central que ilumina a todos los demás planetas de la escena.
+- **Controles avanzados**:
+  - `WASD` + `E`/`Q` para navegación libre de la cámara (modo vuelo).
+  - Tecla `O` para activar/desactivar la visualización de las órbitas.
+  - Tecla `P` para pausar/reanudar el transcurso del tiempo de la simulación.
+  - Teclas `+` y `-` para multiplicar o dividir la velocidad del tiempo físico (escala de tiempo de x0.0625 hasta x64).
+  - Tecla `R` para restablecer la posición por defecto de la cámara.
+  - Tecla `L` para activar un destello de emergencia ("linterna") desde la cámara.
+
+---
+
+### 14. Proyecto Final (Rubik Pro)
+Juego y demostración técnica avanzada del Cubo de Rubik en 3D desarrollado bajo el patrón de diseño **Modelo-Vista-Controlador (MVC)** para una organización del código 100% orientada a objetos. Cuenta con múltiples modos de visualización y técnicas gráficas avanzadas de renderizado.
+
+**Conceptos clave:**
+- **Patrón MVC completo**:
+  - **Modelo**: `RubiksCube` e `IKChain` manejan la lógica del cubo y la cinemática.
+  - **Vista**: `Shader`, `Texture`, `Camera` y `Renderer` controlan el dibujo y presentación en pantalla.
+  - **Controlador**: `Animator`, `Game` y `App` administran los estados, entrada física y bucles de juego.
+- **Modos de visualización**:
+  - **Jugar (J)**: Modo interactivo donde se pueden girar las caras del cubo en 3D utilizando las teclas `U`, `D`, `L`, `R`, `F`, `B` (manteniendo `SHIFT` para girar en sentido inverso).
+  - **Resolución Automática (M o 1)**: Animación procedural en la que el cubo se resuelve solo de forma automática.
+  - **Path Tracer Monte Carlo (2)**: Renderizador de iluminación global realista en tiempo real basado en trazado de caminos.
+  - **Cinemática Inversa (3)**: Simulación de un brazo robótico articulado (`IKChain`) que sigue de manera procedural una curva de Lissajous tridimensional con deformación de malla.
+- **Estilos de Shading**:
+  - Intercambio dinámico (tecla `T`) entre el modelo de iluminación clásico de **Phong** y un sombreado **Toon (Cel Shading / NPR)**.
+- **Interfaz 2D (HUD)**: Superposición de texto en pantalla en 2D que muestra los controles y el estado actual del juego.
+
+---
+
 ## 🛠️ Tecnologías y Dependencias
 
 | Tecnología | Uso |
@@ -205,8 +244,8 @@ Reemplaza los colores sólidos del material por **mapas de textura**: un **mapa 
 | **GLFW** | Creación de ventana y manejo de input |
 | **GLAD** | Carga de funciones de OpenGL |
 | **GLSL** | Lenguaje de shaders |
-| **stb_image** | Carga de imágenes (ejemplos 4, 5, 7, 8, 9 y 12) |
-| **GLM** | Matemáticas para gráficos (ejemplos 5, 7–12) |
+| **stb_image** | Carga de imágenes (ejemplos 4, 5, 7, 8, 9, 12, Sistema Solar y Proyecto Final) |
+| **GLM** | Matemáticas para gráficos (ejemplos 5, 7–12, Sistema Solar y Proyecto Final) |
 
 ---
 
@@ -266,7 +305,12 @@ Triángulo ──► EBO Cuadrado ──► EBO Casa ──► Delfín (escena c
                                                                             │
                                                               Materiales ──► Materiales (Esferas)
                                                                             │
-                                                              Mapas de Iluminación
+                                                               Mapas de Iluminación
+                                                                        │
+                                                    ┌───────────────────┴───────────────────┐
+                                                    ▼                                       ▼
+                                            Sistema Solar 3D                         Proyecto Final
+                                     (Transformaciones Jerárquicas)                  (Rubik Pro MVC)
 ```
 
 Los ejemplos siguen un orden pedagógico donde cada uno añade un concepto nuevo sobre lo aprendido anteriormente, construyendo gradualmente una comprensión completa del pipeline de OpenGL moderno.
